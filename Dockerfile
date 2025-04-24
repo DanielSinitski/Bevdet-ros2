@@ -61,7 +61,8 @@ RUN python3.8 -m pip install --upgrade pip setuptools==59.5.0 wheel && \
     python3.8 -m pip install \
         torch==1.13.1 \
         torchvision==0.14.1 \
-        -f https://download.pytorch.org/whl/torch_stable.html
+        -f https://download.pytorch.org/whl/torch_stable.html && \
+    python3.8 -m pip install --force-reinstall numpy
 
 # mmcv + onnxruntime
 RUN python3.8 -m pip install mmcv-full==1.5.3 \
