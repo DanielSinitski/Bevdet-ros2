@@ -58,8 +58,10 @@ ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 
 # PyTorch + torchvision (cu118)
 RUN python3.8 -m pip install --upgrade pip setuptools==59.5.0 wheel && \
-    python3.8 -m pip install torch==1.13.1+cu118 torchvision==0.14.1+cu118 \
-        -f https://download.pytorch.org/whl/torch_stable.html
+    python3.8 -m pip install \
+        torch==1.13.1+cu118 \
+        torchvision==0.14.1+cu118 \
+        --extra-index-url https://download.pytorch.org/whl/cu118
 
 # mmcv + onnxruntime
 RUN python3.8 -m pip install mmcv-full==1.5.3 \
