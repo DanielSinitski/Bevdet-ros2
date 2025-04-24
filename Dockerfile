@@ -51,15 +51,8 @@ RUN apt update && apt install -y apt-utils && \
     wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb && \
     dpkg -i cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb && \
     cp /var/cuda-repo-ubuntu2204-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ && \
-    apt update && apt install -y \
-        cuda-toolkit-11-8 \
-        cuda-cudart-11-8 \
-        libcudnn8 \
-        libcudnn8-dev \
-        libcublas-11-8 \
-        libcublas-dev-11-8 && \
+    apt update && apt install -y cuda-toolkit-11-8 && \
     rm cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb
-
 ENV PATH=/usr/local/cuda/bin:$PATH
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 
