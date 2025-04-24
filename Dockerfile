@@ -71,7 +71,7 @@ RUN python3.8 -m pip install pip==22.3.1
 RUN python3.8 -m pip install --force-reinstall --no-cache-dir psutil
 
 # Installation mmcv + onnxruntime
-RUN python3.8 -m pip install mmcv-full==1.5.3 \
+RUN python3.8 -m pip install mmcv-full==1.4.8 \
     -f https://download.openmmlab.com/mmcv/dist/cu118/torch1.13.1/index.html && \
     python3.8 -m pip install onnxruntime-gpu==1.14.1
 
