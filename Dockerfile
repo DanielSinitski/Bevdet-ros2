@@ -71,9 +71,8 @@ RUN python3.8 -m pip install pip==22.3.1
 RUN python3.8 -m pip install --force-reinstall --no-cache-dir psutil
 
 # Manuelle Installation von mmcv-full
-
 RUN python3.8 -m pip install \
-  https://download.openmmlab.com/mmcv/dist/cu118/torch1.13.1/mmcv_full-1.5.3-cp38-cp38-manylinux1_x86_64.whl
+  https://download.openmmlab.com/mmcv/dist/cu118/torch1.13.1/mmcv_full-1.5.3-cp38-cp38-manylinux2014_x86_64.whl
 
 
 # onnxruntime-gpu installieren
