@@ -1,88 +1,129 @@
-FROM ubuntu:22.04
+FROM nvidia/cuda:11.5.2-cudnn8-devel-ubuntu22.04
 
-ARG DEBIAN_FRONTEND=noninteractive
+ARG PYTHON_VERSION=3.8
+ARG TORCH_VERSION=1.10.0
+ARG TORCHVISION_VERSION=0.11.0
+ARG ONNXRUNTIME_VERSION=1.17.0
+ARG MMCV_VERSION=1.5.3
+ARG PPLCV_VERSION=0.7.0
+ENV FORCE_CUDA="1"
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Systemtools & Python 3.8
-RUN apt update && apt install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt update && apt install -y \
-    python3.8 \
-    python3.8-dev \
-    python3.8-venv \
-    python3.8-distutils \
+# Optional: Mirrors aktivieren
+ARG USE_SRC_INSIDE=false
+RUN if [ ${USE_SRC_INSIDE} == true ] ; then \
+    sed -i s/archive.ubuntu.com/mirrors.aliyun.com/g /etc/apt/sources.list && \
+    sed -i s/security.ubuntu.com/mirrors.aliyun.com/g /etc/apt/sources.list ; \
+    echo "Use aliyun source for installing libs" ; \
+else \
+    echo "Keep the download source unchanged" ; \
+fi
+
+RUN sed -i s:/archive.ubuntu.com:/mirrors.tuna.tsinghua.edu.cn/ubuntu:g /etc/apt/sources.list && \
+    apt-get update && apt-get install -y \
+    python${PYTHON_VERSION} \
+    python3-venv \
+    python3-pip \
+    python3-dev \
+    python3-setuptools \
     python-is-python3 \
-    curl \
-    wget \
-    git \
     build-essential \
-    locales \
+    curl \
+    vim \
+    git \
+    wget \
     lsb-release \
-    sudo \
-    gnupg \
-    libgl1-mesa-glx \
+    gnupg2 \
+    locales \
+    libsm6 \
     libxext6 \
     libxrender-dev \
+    libgl1-mesa-glx \
     libssl-dev \
     libopencv-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libspdlog-dev --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-# pip für Python 3.8
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.8
-
-# Locale setzen
+# ROS2 Humble installieren
 RUN locale-gen en_US en_US.UTF-8 && \
-    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
+    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
+    export LANG=en_US.UTF-8 && \
+    apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | apt-key add - && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list && \
+    apt-get update && \
+    apt-get install -y ros-humble-desktop python3-colcon-common-extensions && \
+    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
-# ROS 2 Humble
-RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | apt-key add - && \
-    echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2.list && \
-    apt update && apt install -y ros-humble-desktop python3-colcon-common-extensions && \
-    echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-SHELL ["/bin/bash", "-c"]
-RUN source /opt/ros/humble/setup.bash
-ENV ROS_DISTRO=humble
+# Upgrade pip & virtualenv
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    pip install --upgrade pip setuptools wheel
 
-# CUDA 11.8
-RUN apt update && apt install -y apt-utils && \
-    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin && \
-    mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
-    wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb && \
-    dpkg -i cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb && \
-    cp /var/cuda-repo-ubuntu2204-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ && \
-    apt update && apt install -y cuda-toolkit-11-8 && \
-    rm cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb
-ENV PATH=/usr/local/cuda/bin:$PATH
-ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV PATH="/opt/venv/bin:$PATH"
 
-# PyTorch + torchvision (cu118)
-RUN python3.8 -m pip install --upgrade pip setuptools==59.5.0 wheel && \
-    python3.8 -m pip install \
-        torch==1.13.1 \
-        torchvision==0.14.1 \
-        -f https://download.pytorch.org/whl/torch_stable.html && \
-    python3.8 -m pip install --force-reinstall numpy
+# Install PyTorch
+RUN pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} --extra-index-url https://download.pytorch.org/whl/cu115 -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# Downgrade pip um MMCV sauber zu bauen
-RUN python3.8 -m pip install pip==22.3.1
+# Install mmcv-full
+RUN pip install mmcv-full==${MMCV_VERSION} -f https://download.openmmlab.com/mmcv/dist/cu115/torch${TORCH_VERSION}/index.html -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# Fix für psutil
-RUN python3.8 -m pip install --force-reinstall --no-cache-dir psutil
+WORKDIR /root/workspace
 
-# Manuelle Installation von mmcv-full
-RUN python3.8 -m pip install \
-  https://download.openmmlab.com/mmcv/dist/cu118/torch1.13.1/mmcv_full-1.5.3-cp38-cp38-manylinux2014_x86_64.whl
+# Install onnxruntime
+RUN wget https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz \
+    && tar -zxvf onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz \
+    && pip install onnxruntime-gpu==${ONNXRUNTIME_VERSION} -i https://pypi.tuna.tsinghua.edu.cn/simple
 
+ENV ONNXRUNTIME_DIR=/root/workspace/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
 
-# onnxruntime-gpu installieren
-RUN python3.8 -m pip install onnxruntime-gpu==1.14.1
+# Install mmdeploy
+ARG VERSION=1.0.0
+RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
+    cd mmdeploy && \
+    if [ -z ${VERSION} ] ; then echo "No MMDeploy version passed in, building on master" ; else git checkout tags/v${VERSION} -b tag_v${VERSION} ; fi && \
+    git submodule update --init --recursive && \
+    mkdir -p build && cd build && \
+    cmake -DMMDEPLOY_TARGET_BACKENDS="ort" .. && \
+    make -j$(nproc) && cd .. && \
+    pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# weitere Python Pakete
-RUN python3.8 -m pip install \
+# Build ppl.cv
+RUN git clone https://github.com/openppl-public/ppl.cv.git && \
+    cd ppl.cv && \
+    git checkout tags/v${PPLCV_VERSION} -b v${PPLCV_VERSION} && \
+    ./build.sh cuda
+
+ENV BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/local/cuda/compat/lib.real/:$LD_LIBRARY_PATH
+
+# Rebuild mmdeploy SDK ohne TensorRT
+RUN cd /root/workspace/mmdeploy && \
+    rm -rf build/CM* build/cmake-install.cmake build/Makefile build/csrc && \
+    mkdir -p build && cd build && \
+    cmake .. \
+        -DMMDEPLOY_BUILD_SDK=ON \
+        -DMMDEPLOY_BUILD_EXAMPLES=ON \
+        -DCMAKE_CXX_COMPILER=g++ \
+        -Dpplcv_DIR=/root/workspace/ppl.cv/cuda-build/install/lib/cmake/ppl \
+        -DONNXRUNTIME_DIR=${ONNXRUNTIME_DIR} \
+        -DMMDEPLOY_BUILD_SDK_PYTHON_API=ON \
+        -DMMDEPLOY_TARGET_DEVICES="cuda;cpu" \
+        -DMMDEPLOY_TARGET_BACKENDS="ort" \
+        -DMMDEPLOY_CODEBASES=all && \
+    make -j$(nproc) && make install && \
+    export SPDLOG_LEVEL=warn && \
+    echo "Built MMDeploy version v${VERSION} for GPU devices successfully!"
+
+ENV LD_LIBRARY_PATH="/root/workspace/mmdeploy/build/lib:${BACKUP_LD_LIBRARY_PATH}"
+
+# Final Python packages
+RUN pip install \
     mmdet==2.25.1 \
     mmsegmentation==0.25.0 \
-    mmdet3d==1.0.0rc4 \
     pycuda \
     lyft_dataset_sdk \
     networkx==2.2 \
@@ -93,28 +134,14 @@ RUN python3.8 -m pip install \
     scikit-image \
     tensorboard \
     trimesh==2.35.39 \
-    matplotlib \
-    scipy \
-    Pillow \
-    imageio \
-    openmim \
-    spconv
+    -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# mmdeploy
-WORKDIR /root/workspace
-RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
-    cd mmdeploy && \
-    git checkout tags/v1.0.0 -b v1.0.0 && \
-    git submodule update --init --recursive && \
-    mkdir -p build && cd build && \
-    cmake -DMMDEPLOY_TARGET_BACKENDS="ort" .. && \
-    make -j$(nproc) && cd .. && \
-    python3.8 -m pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install openmim
 
-# pplcv
-RUN git clone https://github.com/openppl-public/ppl.cv.git && \
-    cd ppl.cv && \
-    git checkout tags/v0.7.0 -b v0.7.0 && \
-    ./build.sh cuda
+RUN pip install mmdet3d==1.0.0rc4
 
-WORKDIR /root/workspace
+RUN pip install matplotlib scipy Pillow imageio
+
+RUN pip install spconv 
+
+RUN pip install setuptools==59.5.0
