@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.5.2-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:11.5.1-cudnn8-devel-ubuntu22.04
 
 ARG PYTHON_VERSION=3.8
 ARG TORCH_VERSION=1.10.0
