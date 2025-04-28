@@ -1,13 +1,78 @@
-FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+# This is the ROS2 Base Image for DNN deployment in the STADT:up Consortia with cuda installed
 
-ARG TORCH_VERSION=1.10.0
-ARG TORCHVISION_VERSION=0.11.0
-ARG ONNXRUNTIME_VERSION=1.17.0
-ARG MMCV_VERSION=1.5.3
-ARG PPLCV_VERSION=0.7.0
-ARG MMDEPLOY_VERSION=1.0.0
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 ENV FORCE_CUDA="1"
 ENV DEBIAN_FRONTEND=noninteractive
+
+USER root
+RUN apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false update
+RUN apt update && apt upgrade -y && apt install --no-install-recommends -y \
+    git \
+    build-essential \
+    curl \
+    software-properties-common \
+    locales
+
+RUN locale-gen en_US en_US.UTF-8
+RUN update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+RUN LANG=en_US.UTF-8
+
+RUN add-apt-repository universe
+RUN apt -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false update && apt upgrade -y
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+RUN apt -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false update && apt upgrade -y
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt install -y ros-humble-desktop
+
+# install bootstrap tools
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    sudo \
+    python3-pip \
+    python-is-python3 \
+    python3-colcon-common-extensions \
+    python3-colcon-mixin \
+    python3-rosdep \
+    python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
+
+# bootstrap rosdep
+RUN rosdep init && \
+  rosdep update --rosdistro humble
+
+# setup colcon mixin and metadata
+RUN colcon mixin add default \
+      https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
+    colcon mixin update && \
+    colcon metadata add default \
+      https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
+    colcon metadata update
+
+# install ros2 packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-humble-ros-base=0.10.0-1* \
+    && rm -rf /var/lib/apt/lists/*
+
+# install basic ros2 packages
+RUN apt update && apt upgrade -y && apt install --no-install-recommends -y \
+    ros-humble-sensor-msgs \
+    ros-humble-std-msgs \
+    ros-humble-cv-bridge \
+    ros-humble-vision-msgs \
+    ros-humble-rmw-cyclonedds-cpp
+
+# Install basic python packages
+RUN pip3 install \
+    opencv-python \
+    cv_bridge \
+    numpy
+
+# change shell
+SHELL ["/bin/bash", "--login", "-c"]
 
 # Mirror einstellen (optional)
 ARG USE_SRC_INSIDE=false
@@ -23,20 +88,13 @@ fi
 RUN sed -i s:/archive.ubuntu.com:/mirrors.tuna.tsinghua.edu.cn/ubuntu:g /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y \
-    locales \
-    curl \
     lsb-release \
     gnupg \
-    software-properties-common \
     python3 \
-    python3-pip \
     python3-venv \
     python3-dev \
     python3-setuptools \
-    python-is-python3 \
-    build-essential \
     wget \
-    git \
     vim \
     libsm6 \
     libxext6 \
@@ -47,16 +105,6 @@ RUN sed -i s:/archive.ubuntu.com:/mirrors.tuna.tsinghua.edu.cn/ubuntu:g /etc/apt
     libspdlog-dev \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
-
-# ROS 2 Humble
-RUN locale-gen en_US en_US.UTF-8 && \
-    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
-    export LANG=en_US.UTF-8 && \
-    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
-    > /etc/apt/sources.list.d/ros2.list && \
-    apt update && \
-    apt install -y ros-humble-desktop python3-colcon-common-extensions
 
 # Venv + Pip Setup
 RUN python3 -m pip install --upgrade pip && \
@@ -75,6 +123,7 @@ RUN pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # mmcv-full
+ARG MMCV_VERSION=1.5.3
 RUN pip install mmcv-full==${MMCV_VERSION} \
     -f https://download.openmmlab.com/mmcv/dist/cu117/torch${TORCH_VERSION}/index.html \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -82,6 +131,7 @@ RUN pip install mmcv-full==${MMCV_VERSION} \
 WORKDIR /root/workspace
 
 # ONNX Runtime
+ARG ONNXRUNTIME_VERSION=1.17.0
 RUN wget https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz && \
     tar -zxvf onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz && \
     pip install onnxruntime-gpu==${ONNXRUNTIME_VERSION} -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -90,6 +140,7 @@ ENV ONNXRUNTIME_DIR=/root/workspace/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
 ENV TENSORRT_DIR=/workspace/tensorrt
 
 # MMDeploy
+ARG MMDEPLOY_VERSION=1.0.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     cd mmdeploy && \
     git checkout tags/v${MMDEPLOY_VERSION} -b tag_v${MMDEPLOY_VERSION} && \
@@ -100,6 +151,7 @@ RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # Build ppl.cv
+ARG PPLCV_VERSION=0.7.0
 RUN git clone https://github.com/openppl-public/ppl.cv.git && \
     cd ppl.cv && \
     git checkout tags/v${PPLCV_VERSION} -b v${PPLCV_VERSION} && \
@@ -149,5 +201,4 @@ RUN pip install \
     spconv \
     setuptools==59.5.0 \
     openmim \
-    mmdet3d==1.0.0rc4 \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
