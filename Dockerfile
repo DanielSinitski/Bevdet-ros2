@@ -116,8 +116,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # PyTorch + Torchvision
 
-ARG TORCH_VERSION=1.10.0
-ARG TORCHVISION_VERSION=0.11.0
+ARG TORCH_VERSION=1.11.0
+ARG TORCHVISION_VERSION=0.12.0
 RUN pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} \
     --extra-index-url https://download.pytorch.org/whl/cu117 \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
