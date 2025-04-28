@@ -119,7 +119,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 ARG TORCH_VERSION=1.11.0
 ARG TORCHVISION_VERSION=0.12.0
 RUN pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} \
-    --extra-index-url https://download.pytorch.org/whl/cu117 \
+    --extra-index-url https://download.pytorch.org/whl/cu118 \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # mmcv-full
