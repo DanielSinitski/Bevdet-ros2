@@ -116,16 +116,17 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # PyTorch + Torchvision
 
-ARG TORCH_VERSION=1.11.0
-ARG TORCHVISION_VERSION=0.12.0
-RUN pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} \
-    --extra-index-url https://download.pytorch.org/whl/cu118 \
+# PyTorch + Torchvision: Richtiges CUDA Matching
+ARG TORCH_VERSION=1.12.1
+ARG TORCHVISION_VERSION=0.13.1
+RUN pip install torch==${TORCH_VERSION}+cu116 torchvision==${TORCHVISION_VERSION}+cu116 \
+    -f https://download.pytorch.org/whl/cu116/torch_stable.html \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# mmcv-full
+# mmcv-full: passt zu torch 1.12.1 + CUDA 11.6/11.7
 ARG MMCV_VERSION=1.5.3
 RUN pip install mmcv-full==${MMCV_VERSION} \
-    -f https://download.openmmlab.com/mmcv/dist/cu118/torch${TORCH_VERSION}/index.html \
+    -f https://download.openmmlab.com/mmcv/dist/cu117/torch1.12/index.html \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /root/workspace
