@@ -116,8 +116,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # PyTorch + Torchvision
 
-ARG TORCH_VERSION=1.11.0
-ARG TORCHVISION_VERSION=0.12.0
+ARG TORCH_VERSION=1.10.0
+ARG TORCHVISION_VERSION=0.11.0
 RUN pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} \
     --extra-index-url https://download.pytorch.org/whl/cu117 \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -125,7 +125,7 @@ RUN pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} \
 # mmcv-full
 ARG MMCV_VERSION=1.5.3
 RUN pip install mmcv-full==${MMCV_VERSION} \
-    -f https://download.openmmlab.com/mmcv/dist/cu117/torch${TORCH_VERSION}/index.html \
+    -f https://download.openmmlab.com/mmcv/dist/cu118/torch${TORCH_VERSION}/index.html \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /root/workspace
