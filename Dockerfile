@@ -156,7 +156,9 @@ ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 #RUN ls -la $CUDA_HOME && ls -la $CUDA_HOME/bin && nvcc --version
 
 ARG MMDEPLOY_VERSION=1.0.0
-RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
+RUN export PATH=/usr/local/cuda/bin:$PATH && \
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH && \
+    git clone https://github.com/open-mmlab/mmdeploy.git && \
     cd mmdeploy && \
     git checkout tags/v${MMDEPLOY_VERSION} -b tag_v${MMDEPLOY_VERSION} && \
     git submodule update --init --recursive && \
@@ -165,6 +167,7 @@ RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
       -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda .. && \
     make -j$(nproc) && cd .. && \
     pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
+
 
 # Build ppl.cv
 ARG PPLCV_VERSION=0.7.0
