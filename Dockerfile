@@ -149,7 +149,6 @@ RUN apt-get update && apt-get install -y wget gnupg && \
     rm -f cuda-keyring_1.1-1_all.deb
     
 # CUDA korrekt verlinken + nvcc verfügbar machen
-    
 ENV CUDA_HOME=/usr/local/cuda-11.8
 ENV PATH=$CUDA_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=$CUDA_HOME/compat/lib.real:$LD_LIBRARY_PATH
@@ -160,8 +159,18 @@ RUN apt-get update && \
     apt-get install -y \
     cuda-toolkit-11-8
 
+# Build ppl.cv (before mmdeploy)
+ARG PPLCV_VERSION=0.7.0
+RUN git clone https://github.com/openppl-public/ppl.cv.git && \
+    cd ppl.cv && \
+    git checkout tags/v${PPLCV_VERSION} -b v${PPLCV_VERSION} && \
+    ./build.sh cuda
+
+ENV BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/local/cuda/compat/lib.real/:$LD_LIBRARY_PATH
+
+# Install mmdeploy
 ARG MMDEPLOY_VERSION=1.1.0
-# Install mmdeploy (aktueller master für TensorRT-Kompatibilität)
 RUN git clone https://github.com/open-mmlab/mmdeploy.git /root/workspace/mmdeploy && \
     cd /root/workspace/mmdeploy && \
     git checkout master && \
@@ -183,19 +192,6 @@ RUN git clone https://github.com/open-mmlab/mmdeploy.git /root/workspace/mmdeplo
       -DCUDA_LIBRARIES=/usr/local/cuda-11.8/lib64/stubs && \
     make -j$(nproc) && make install && \
     pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-    
-
-
-# Build ppl.cv
-ARG PPLCV_VERSION=0.7.0
-RUN git clone https://github.com/openppl-public/ppl.cv.git && \
-    cd ppl.cv && \
-    git checkout tags/v${PPLCV_VERSION} -b v${PPLCV_VERSION} && \
-    ./build.sh cuda
-
-ENV BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH=/usr/local/cuda/compat/lib.real/:$LD_LIBRARY_PATH
 
 # MMDeploy SDK erneut bauen
 RUN cd /root/workspace/mmdeploy && \
