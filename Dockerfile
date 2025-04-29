@@ -155,6 +155,10 @@ ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
 #RUN ls -la $CUDA_HOME && ls -la $CUDA_HOME/bin && nvcc --version
 
+RUN apt-get update && \
+    apt-get install -y \
+    cuda-toolkit-11-8
+
 ARG MMDEPLOY_VERSION=1.0.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     cd mmdeploy && \
