@@ -136,7 +136,8 @@ RUN wget https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTI
     pip install onnxruntime-gpu==${ONNXRUNTIME_VERSION} -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ENV ONNXRUNTIME_DIR=/root/workspace/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
-ENV TENSORRT_DIR=/workspace/tensorrt
+#ENV TENSORRT_DIR=/workspace/tensorrt
+ENV TENSORRT_DIR=/usr
 
 # Install TensorRT
 RUN apt-get update && apt-get install -y wget gnupg && \
@@ -160,17 +161,29 @@ RUN apt-get update && \
     cuda-toolkit-11-8
 
 ARG MMDEPLOY_VERSION=1.1.0
-RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
-    cd mmdeploy && \
-    git checkout tags/v${MMDEPLOY_VERSION} -b tag_v${MMDEPLOY_VERSION} && \
+# Install mmdeploy (aktueller master für TensorRT-Kompatibilität)
+RUN git clone https://github.com/open-mmlab/mmdeploy.git /root/workspace/mmdeploy && \
+    cd /root/workspace/mmdeploy && \
+    git checkout master && \
     git submodule update --init --recursive && \
     mkdir -p build && cd build && \
-    cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" \
+    cmake .. \
+      -DMMDEPLOY_BUILD_SDK=ON \
+      -DMMDEPLOY_BUILD_EXAMPLES=ON \
+      -DMMDEPLOY_BUILD_SDK_PYTHON_API=ON \
+      -DMMDEPLOY_CODEBASES=all \
+      -DMMDEPLOY_TARGET_BACKENDS="ort;trt" \
+      -DMMDEPLOY_TARGET_DEVICES="cuda;cpu" \
+      -DONNXRUNTIME_DIR=${ONNXRUNTIME_DIR} \
+      -DTENSORRT_DIR=${TENSORRT_DIR} \
+      -Dpplcv_DIR=/root/workspace/ppl.cv/cuda-build/install/lib/cmake/ppl \
+      -DCMAKE_CXX_COMPILER=g++ \
       -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.8 \
       -DCUDA_INCLUDE_DIRS=/usr/local/cuda-11.8/include \
-      -DCUDA_LIBRARIES=/usr/local/cuda-11.8/lib64/stubs .. &&\
-    make -j$(nproc) && cd .. && \
+      -DCUDA_LIBRARIES=/usr/local/cuda-11.8/lib64/stubs && \
+    make -j$(nproc) && make install && \
     pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
+
     
 
 
