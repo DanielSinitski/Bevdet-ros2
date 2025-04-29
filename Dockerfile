@@ -150,7 +150,9 @@ RUN apt-get update && apt-get install -y wget gnupg && \
         python3-libnvinfer uff-converter-tf && \
     rm -f cuda-keyring_1.1-1_all.deb
 
-    
+
+RUN ls /usr/local/cuda/bin && /usr/local/cuda/bin/nvcc --version
+
 ARG MMDEPLOY_VERSION=1.0.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     cd mmdeploy && \
