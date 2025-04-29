@@ -166,7 +166,7 @@ RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     git submodule update --init --recursive && \
     mkdir -p build && cd build && \
     cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" \
-      -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda .. && \
+      -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.8 .. && \
     make -j$(nproc) && cd .. && \
     pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
     
