@@ -146,10 +146,8 @@ RUN apt-get update && apt-get install -y wget gnupg && \
     wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
     dpkg -i cuda-keyring_1.1-1_all.deb && \
     apt-get update && \
-    apt-get install -y tensorrt=8.6.1-1+cuda11.8 libnvinfer-dev=8.6.1-1+cuda11.8 \
-                          libnvinfer-plugin8=8.6.1-1+cuda11.8 libnvinfer-plugin-dev=8.6.1-1+cuda11.8 \
-                          python3-libnvinfer=8.6.1-1+cuda11.8 \
-                          uff-converter-tf && \
+    apt-get install -y tensorrt libnvinfer-dev libnvinfer-plugin-dev \
+        python3-libnvinfer uff-converter-tf && \
     rm -f cuda-keyring_1.1-1_all.deb
 
     
