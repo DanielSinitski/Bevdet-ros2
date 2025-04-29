@@ -142,17 +142,17 @@ ENV ONNXRUNTIME_DIR=/root/workspace/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
 ENV TENSORRT_DIR=/workspace/tensorrt
 
 # Install TensorRT
-# Kopiere das lokale .deb Paket ins Image
-COPY nv-tensorrt-local-repo-ubuntu2204-8.6.1-cuda-11.8_1.0-1_amd64.deb /tmp/
-
-# Installiere TensorRT aus dem lokalen DEB-Repo
-RUN dpkg -i /tmp/nv-tensorrt-local-repo-ubuntu2004-8.6.1-cuda11.8_1.0-1_amd64.deb && \
-    cp /var/nv-tensorrt-local-repo-*/cuda-compat* /etc/apt/trusted.gpg.d/ && \
+RUN apt-get update && apt-get install -y wget gnupg && \
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
+    dpkg -i cuda-keyring_1.1-1_all.deb && \
     apt-get update && \
-    apt-get install -y tensorrt
+    apt-get install -y tensorrt=8.6.1-1+cuda11.8 libnvinfer-dev=8.6.1-1+cuda11.8 \
+                          libnvinfer-plugin8=8.6.1-1+cuda11.8 libnvinfer-plugin-dev=8.6.1-1+cuda11.8 \
+                          python3-libnvinfer=8.6.1-1+cuda11.8 \
+                          uff-converter-tf && \
+    rm -f cuda-keyring_1.1-1_all.deb
 
-RUN apt-get install -y python3-libnvinfer
-
+    
 ARG MMDEPLOY_VERSION=1.0.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     cd mmdeploy && \
