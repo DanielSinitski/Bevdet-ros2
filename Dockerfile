@@ -149,17 +149,13 @@ RUN apt-get update && apt-get install -y wget gnupg && \
     apt-get install -y tensorrt libnvinfer-dev libnvinfer-plugin-dev \
         python3-libnvinfer uff-converter-tf && \
     rm -f cuda-keyring_1.1-1_all.deb
+    
+# CUDA korrekt verlinken + nvcc verfügbar machen
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=$CUDA_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-# Install full CUDA toolkit to get nvcc
-RUN apt-get update && apt-get install -y cuda-toolkit-11-8
-
-RUN ls /usr/local/ | grep cuda
-
-RUN ls -la /usr/local/ && ls /usr/local/cuda-11.8
-# Verlinken, falls nötig
-RUN ln -s /usr/local/cuda-11.8 /usr/local/cuda
-
-RUN ls /usr/local/cuda/bin && /usr/local/cuda/bin/nvcc --version
+RUN ls -la $CUDA_HOME && ls -la $CUDA_HOME/bin && nvcc --version
 
 ARG MMDEPLOY_VERSION=1.0.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
