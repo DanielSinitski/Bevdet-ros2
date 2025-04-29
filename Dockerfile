@@ -159,7 +159,7 @@ RUN apt-get update && \
     apt-get install -y \
     cuda-toolkit-11-8
 
-ARG MMDEPLOY_VERSION=1.2.0
+ARG MMDEPLOY_VERSION=1.1.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     cd mmdeploy && \
     git checkout tags/v${MMDEPLOY_VERSION} -b tag_v${MMDEPLOY_VERSION} && \
