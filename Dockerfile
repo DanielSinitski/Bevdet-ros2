@@ -157,7 +157,8 @@ RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     git checkout tags/v${MMDEPLOY_VERSION} -b tag_v${MMDEPLOY_VERSION} && \
     git submodule update --init --recursive && \
     mkdir -p build && cd build && \
-    cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" .. && \
+    cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" \
+      -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda .. && \
     make -j$(nproc) && cd .. && \
     pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
 
