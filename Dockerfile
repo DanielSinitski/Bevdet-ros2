@@ -151,6 +151,12 @@ RUN apt-get update && apt-get install -y wget gnupg && \
     rm -f cuda-keyring_1.1-1_all.deb
     
 # CUDA korrekt verlinken + nvcc verfügbar machen
+# Zeige bekannte CUDA-Verzeichnisse
+RUN find / -type f -name "nvcc" 2>/dev/null
+
+# Oder alle CUDA-Installationen auflisten
+RUN find / -type d -name "bin" -path "*cuda*" 2>/dev/null
+
 ENV CUDA_HOME=/usr/local/cuda
 ENV PATH=$CUDA_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
