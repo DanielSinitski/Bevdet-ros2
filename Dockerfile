@@ -192,7 +192,7 @@ RUN cd /root/workspace/mmdeploy && \
         -DONNXRUNTIME_DIR=${ONNXRUNTIME_DIR} \
         -DMMDEPLOY_BUILD_SDK_PYTHON_API=ON \
         -DMMDEPLOY_TARGET_DEVICES="cuda;cpu" \
-        -DMMDEPLOY_TARGET_BACKENDS="ort;trt" \
+        -DMMDEPLOY_TARGET_BACKENDS="ort" \
         -DMMDEPLOY_CODEBASES=all && \
     make -j$(nproc) && make install && \
     export SPDLOG_LEVEL=warn
