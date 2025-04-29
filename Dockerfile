@@ -151,18 +151,12 @@ RUN apt-get update && apt-get install -y wget gnupg && \
     rm -f cuda-keyring_1.1-1_all.deb
     
 # CUDA korrekt verlinken + nvcc verfügbar machen
-# Zeige bekannte CUDA-Verzeichnisse
-RUN echo "Suche nvcc..." && find / -type f -name "nvcc" 2>/dev/null
-
-# Oder alle CUDA-Installationen auflisten
-RUN echo "Suche nach nvcc..." && \
-    find / -type f -name "nvcc" -path "*cuda*" 2>/dev/null
     
 ENV CUDA_HOME=/usr/local/cuda
 ENV PATH=$CUDA_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-RUN ls -la $CUDA_HOME && ls -la $CUDA_HOME/bin && nvcc --version
+#RUN ls -la $CUDA_HOME && ls -la $CUDA_HOME/bin && nvcc --version
 
 ARG MMDEPLOY_VERSION=1.0.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
