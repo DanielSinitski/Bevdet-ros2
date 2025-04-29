@@ -71,9 +71,6 @@ RUN pip3 install \
     cv_bridge \
     numpy
 
-# change shell
-SHELL ["/bin/bash", "--login", "-c"]
-
 # Mirror einstellen (optional)
 ARG USE_SRC_INSIDE=false
 RUN if [ "${USE_SRC_INSIDE}" = "true" ]; then \
@@ -192,7 +189,7 @@ RUN cd /root/workspace/mmdeploy && \
         -DONNXRUNTIME_DIR=${ONNXRUNTIME_DIR} \
         -DMMDEPLOY_BUILD_SDK_PYTHON_API=ON \
         -DMMDEPLOY_TARGET_DEVICES="cuda;cpu" \
-        -DMMDEPLOY_TARGET_BACKENDS="ort" \
+        -DMMDEPLOY_TARGET_BACKENDS="ort;trt" \
         -DMMDEPLOY_CODEBASES=all && \
     make -j$(nproc) && make install && \
     export SPDLOG_LEVEL=warn
@@ -221,3 +218,6 @@ RUN pip install \
     setuptools==59.5.0 \
     openmim \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# change shell
+SHELL ["/bin/bash", "--login", "-c"]
