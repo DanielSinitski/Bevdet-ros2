@@ -153,6 +153,9 @@ RUN apt-get update && apt-get install -y wget gnupg && \
 # Install full CUDA toolkit to get nvcc
 RUN apt-get update && apt-get install -y cuda-toolkit-11-8
 
+RUN ls /usr/local/ | grep cuda
+
+RUN ls -la /usr/local/ && ls /usr/local/cuda-11.8
 # Verlinken, falls nötig
 RUN ln -s /usr/local/cuda-11.8 /usr/local/cuda
 
