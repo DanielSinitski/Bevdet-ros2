@@ -151,7 +151,8 @@ RUN apt-get update && apt-get install -y wget gnupg && \
     rm -f cuda-keyring_1.1-1_all.deb
 
 
-RUN apt-get update && apt-get install -y cuda-toolkit-11-8
+RUN apt-get update && apt-get install -y cuda-compiler-11-8 && \
+    ln -s /usr/local/cuda-11.8 /usr/local/cuda
 
 RUN ls /usr/local/cuda/bin && /usr/local/cuda/bin/nvcc --version
 
