@@ -141,12 +141,17 @@ RUN wget https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTI
 ENV ONNXRUNTIME_DIR=/root/workspace/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
 ENV TENSORRT_DIR=/workspace/tensorrt
 
-# Install TensorRT (Beispiel für CUDA 11.8, TensorRT 8.6)
-RUN wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/secure/8.6.1/tars/TensorRT-8.6.1.6.Linux.x86_64-gnu.cuda-11.8.cudnn8.6.tar.gz \
-    -O tensorrt.tar.gz && \
-    tar -xzvf tensorrt.tar.gz && \
-    mv TensorRT-8.6.1.6 /workspace/tensorrt
-# MMDeploy
+# Install TensorRT
+# Kopiere das lokale .deb Paket ins Image
+COPY nv-tensorrt-local-repo-ubuntu2204-8.6.1-cuda-11.8_1.0-1_amd64.deb /tmp/
+
+# Installiere TensorRT aus dem lokalen DEB-Repo
+RUN dpkg -i /tmp/nv-tensorrt-local-repo-ubuntu2004-8.6.1-cuda11.8_1.0-1_amd64.deb && \
+    cp /var/nv-tensorrt-local-repo-*/cuda-compat* /etc/apt/trusted.gpg.d/ && \
+    apt-get update && \
+    apt-get install -y tensorrt
+
+RUN apt-get install -y python3-libnvinfer
 
 ARG MMDEPLOY_VERSION=1.0.0
 RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
