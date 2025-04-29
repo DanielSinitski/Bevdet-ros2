@@ -149,9 +149,9 @@ RUN apt-get update && apt-get install -y wget gnupg && \
     
 # CUDA korrekt verlinken + nvcc verfügbar machen
     
-ENV CUDA_HOME=/usr/local/cuda
+ENV CUDA_HOME=/usr/local/cuda-11.8
 ENV PATH=$CUDA_HOME/bin:$PATH
-ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=$CUDA_HOME/compat/lib.real:$LD_LIBRARY_PATH
 
 #RUN ls -la $CUDA_HOME && ls -la $CUDA_HOME/bin && nvcc --version
 
@@ -166,7 +166,9 @@ RUN git clone https://github.com/open-mmlab/mmdeploy.git && \
     git submodule update --init --recursive && \
     mkdir -p build && cd build && \
     cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" \
-      -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.8 .. && \
+      -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.8 \
+      -DCUDA_INCLUDE_DIRS=/usr/local/cuda-11.8/include \
+      -DCUDA_LIBRARIES=/usr/local/cuda-11.8/lib64/stubs .. &&\
     make -j$(nproc) && cd .. && \
     pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
     
